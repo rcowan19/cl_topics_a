@@ -76,8 +76,4 @@ class Athlete:
         else:
             return False
 
-athlete1 = Athlete("John Doe", "Team A", 1, "05:32.40")
-athlete2 = Athlete("Jane Smith", "Team B", 2, "05:31.15")
-print(athlete1)  # Output: Athlete: John Doe, Team: Team A, Place: 1, Time: 05:32.47
-print(athlete2)  # Output: Athlete: Jane Smith, Team: Team B, Place: 2, Time: 05:31.15
-print(athlete1 < athlete2)  # Output: True
+
