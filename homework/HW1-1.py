@@ -75,5 +75,4 @@ class Athlete:
             return True
         else:
             return False
-
-
+  
