@@ -1,7 +1,8 @@
-
+#import statements
 import tkinter as tk
 from tkinter import filedialog
 
+#funtion to test file opening with tkinter
 def open_file():
     file_path = filedialog.askopenfilename(
         title="Select a File",
@@ -10,8 +11,8 @@ def open_file():
     if file_path:
         with open(file_path, 'r') as file:
             content = file.read()
-            print(content)  # Replace this with your processing logic
-
+            print(content)  
+            
 root = tk.Tk()
 root.title("File Input Example")
 
