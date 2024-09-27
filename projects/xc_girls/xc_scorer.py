@@ -647,7 +647,6 @@ def display_results(frame, results, title):
         
         #loops through atheletes in team 1 results to create labels for 1 to 5 runners
         for i, athlete_info in enumerate(data['Team 1 Results']):
-            print(data["Team 1 Results"])
             athlete_label = ctk.CTkLabel(
                 team1_frame, 
                 text=f"{athlete_info}", 
