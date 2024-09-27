@@ -1,43 +1,51 @@
+#import statements
 import csv
 import customtkinter as ctk
 from tkinter import filedialog
 from PIL import Image
 from tkinter import ttk
 
-# Define the Time class
+#define the time class
 class Time:
+    #init funtion to format the time into minutes and seconds
     def __init__(self, race_time):
         self.minutes, self.seconds = [float(t) for t in race_time.split(":")]
 
+    #str function to be able to print the time nicely
     def __str__(self):
         return f"{int(self.minutes):02}:{self.seconds:05.2f}"
 
-# Define the Athlete class
+#define the athlete class
 class Athlete:
+    #init function to take in the info of the athletes; name, team, place, time, new_place
     def __init__(self, name, team, place, time):
         self.name = name
         self.team = team
         self.place = place
         self.time = Time(time)
-        self.new_place = None  # Initialize new_place
+        self.new_place = None 
 
+    #str function to be able to print the athlete nicely
     def __str__(self):
-        return (f"Athlete: {self.name}, Team: {self.team}, Place: {self.place}, "
-                f"Time: {self.time}")
+        return (f"Athlete: {self.name}, Team: {self.team}, Place: {self.place}, "f"Time: {self.time}")
 
+    #repr function to be able to view the athlete in their dictionaries when printing debug statments
     def __repr__(self):
         return f"('{self.name}', '{self.team}', {self.place}, '{self.time}')"
 
-# Define the Team class
+#define the team class
 class Team:
+    #init function to take create an inital teams dictionary 
     def __init__(self):
         self.teams = {}
 
+    #adds the athletes to their respective teams and create new teams
     def add_athlete(self, athlete):
         if athlete.team not in self.teams:
             self.teams[athlete.team] = []
         self.teams[athlete.team].append(athlete)
 
+    #gets the varsity runners by sorting the athletes and taking the the top 7, also makes sure teams with less then 5 get removed
     def get_varsity(self):
         varsity_teams = {}
         for team_name, athletes in self.teams.items():
@@ -48,6 +56,7 @@ class Team:
                 del varsity_teams[team_name]
         return varsity_teams
 
+    #gets the junior varsity runners by sorting the athletes and taking the the next 7, also makes sure teams with less then 5 get removed
     def get_junior_varsity(self):
         junior_varsity_teams = {}
         for team_name, athletes in self.teams.items():
@@ -58,7 +67,7 @@ class Team:
                 del junior_varsity_teams[team_name]
         return junior_varsity_teams
 
-# Function to create athletes from CSV
+#function to create athletes from CSV
 def athlete_creator(csv_file):
     athletes = []
     with open(csv_file, mode='r') as file:
@@ -72,43 +81,43 @@ def athlete_creator(csv_file):
             athletes.append(athlete)
     return athletes
 
-# Global variables to store data across views
+#global variables to store data across views of gui
 athletes_list = []
 varsity_results = {}
 jv_results = {}
 file_path = ""
 
-# Function to import CSV file
+#function to import CSV file
 def import_file():
     global athletes_list, varsity_results, jv_results, file_path
-    file_path = filedialog.askopenfilename(
-        filetypes=[("CSV files", "*.csv")],
-        title="Select a CSV file"
-    )
-    if file_path:
-        varsity_results, jv_results, athletes_list = process_file(file_path)  
-        create_dashboard()
+    file_path = filedialog.askopenfilename(filetypes=[("CSV files", "*.csv")],title="Select a CSV file")
+    varsity_results, jv_results, athletes_list = process_file(file_path)  
+    create_dashboard()
 
-# Function to process the CSV file
+#function to process the CSV file
 def process_file(file_path):
+    #creates the athletes by calling the athlete creator fucntion
     athletes_list = athlete_creator(file_path)
 
+    #filters the athletes into teams by creating a team object and using the add athlete function
     team_filter = Team()
     for athlete in athletes_list:
         team_filter.add_athlete(athlete)
 
-    # Varsity results
+    #creates the varsity teams and then creates and scores all the matchups needed 
     varsity_teams = team_filter.get_varsity()
     varsity_results = compare_all_teams(varsity_teams)
 
-    # Junior Varsity results
+    #creates the junior varsity teams and then creates and scores all the matchups needed 
     junior_varsity_teams = team_filter.get_junior_varsity()
     jv_results = compare_all_teams(junior_varsity_teams)
 
+    #returns the results of the scored matchups and a list of the athletes for the times tab
     return varsity_results, jv_results, athletes_list
 
-# Function to score a matchup between two teams
+#function to score a matchup between two teams
 def scorer(team_1, team_2, team_1_name, team_2_name):
+    #intializes all needed dictionaries and sorts the runners from the matchup
     all_athletes = team_1 + team_2
     sorted_athletes = sorted(all_athletes, key=lambda x: int(x.place))
     team_1_score = {}
@@ -117,6 +126,7 @@ def scorer(team_1, team_2, team_1_name, team_2_name):
     team_2_rest = {}
     new_place = 1
 
+    #assigns new placement to the runner, using only the runners from the matchup
     for athlete in sorted_athletes:
         if athlete in team_1 and len(team_1_score) < 5:
             team_1_score[athlete.name] = new_place
@@ -132,9 +142,11 @@ def scorer(team_1, team_2, team_1_name, team_2_name):
             athlete.new_place = new_place
         new_place += 1
 
+    #sums the new places to get each teams score
     team_1_total = sum(team_1_score.values())
     team_2_total = sum(team_2_score.values())
 
+    #decides which teams wins based on the given scores
     if team_1_total < team_2_total:
         winner = team_1_name
     elif team_2_total < team_1_total:
@@ -142,15 +154,13 @@ def scorer(team_1, team_2, team_1_name, team_2_name):
     else:
         winner = "Tie"
 
-    for athlete in team_1 + team_2:
-        if athlete.name not in team_1_score and athlete.name not in team_2_score:
-            athlete.new_place = None
-
+    #formats the results of the athletes for easy display on the gui
     team_1_list = [f"{athlete} - {place}" for athlete, place in team_1_score.items()]
     team_2_list = [f"{athlete} - {place}" for athlete, place in team_2_score.items()]
     team_1_rest_list = [f"{athlete} - {place}" for athlete, place in team_1_rest.items()]
     team_2_rest_list = [f"{athlete} - {place}" for athlete, place in team_2_rest.items()]
 
+    #returns all the needed results as a dictonary for easy access
     return {
         "Team 1 Score": team_1_total,
         "Team 1 Results": team_1_list,
@@ -163,9 +173,12 @@ def scorer(team_1, team_2, team_1_name, team_2_name):
         "Team 2 Name": team_2_name
     }
 
-# Function to compare all teams
+# function to create all matchups and call the scorer
 def compare_all_teams(teams):
+    #intializes the dict for the results
     results = {}
+
+    #loops through all the teams to create all possible matchup and return the scores
     team_names = list(teams.keys())
     for i in range(len(team_names)):
         for j in range(i + 1, len(team_names)):
@@ -177,9 +190,10 @@ def compare_all_teams(teams):
             results[f"{team_1_name} vs {team_2_name}"] = result
     return results
 
-# Function to create the sidebar
+# function to create the sidebar
 def create_sidebar(parent_frame, times_command=None, scoring_command=None, download_command=None):
-    # Sidebar with corner radius
+
+    #sidebar frame
     sidebar = ctk.CTkFrame(
         parent_frame,
         width=100,
@@ -189,28 +203,27 @@ def create_sidebar(parent_frame, times_command=None, scoring_command=None, downl
     )
     sidebar.grid(row=0, column=0, rowspan=1, sticky="nsew", padx=(15, 0), pady=20)
 
-    # Load images using CTkImage
+    #load images 
     logo_img = ctk.CTkImage(Image.open("cl_topics_a/projects/xc_girls/logo.jpg"), size=(90, 110))
     clock_img = ctk.CTkImage(Image.open("cl_topics_a/projects/xc_girls/clock.png"), size=(45, 45))
     trophy_img = ctk.CTkImage(Image.open("cl_topics_a/projects/xc_girls/trophy.png"), size=(45, 50))
     download_img = ctk.CTkImage(Image.open("cl_topics_a/projects/xc_girls/download.png"), size=(55, 60))
 
 
-    # Logo on sidebar
-    if logo_img:
-        logo_button = ctk.CTkButton(
-            sidebar,
-            text="",
-            image=logo_img,
-            width=100,
-            height=70,
-            corner_radius=15,
-            fg_color="#932b2c",
-            hover_color="#932b2c"
-        )
-        logo_button.grid(row=0, column=0, padx=5, pady=(15, 15))
+    #logo on sidebar
+    logo_button = ctk.CTkButton(
+        sidebar,
+        text="",
+        image=logo_img,
+        width=100,
+        height=70,
+        corner_radius=15,
+        fg_color="#932b2c",
+        hover_color="#932b2c"
+    )
+    logo_button.grid(row=0, column=0, padx=5, pady=(15, 15))
 
-    # Times button on sidebar
+    #times button on sidebar
     results_button = ctk.CTkButton(
         sidebar,
         text="  Times  ",
@@ -225,7 +238,7 @@ def create_sidebar(parent_frame, times_command=None, scoring_command=None, downl
     )
     results_button.grid(row=1, column=0, padx=0, pady=(15, 15))
 
-    # Trophy button on sidebar
+    #scores button on sidebar
     scoring_button = ctk.CTkButton(
         sidebar,
         text="  Scoring  ",
@@ -241,7 +254,7 @@ def create_sidebar(parent_frame, times_command=None, scoring_command=None, downl
     )
     scoring_button.grid(row=2, column=0, padx=0, pady=(15, 15))
 
-    # Download button on sidebar
+    #download button on sidebar
     download_button = ctk.CTkButton(
         sidebar,
         text="Download",
@@ -256,163 +269,261 @@ def create_sidebar(parent_frame, times_command=None, scoring_command=None, downl
     )
     download_button.grid(row=3, column=0, padx=0, pady=(15, 15))
 
-    # Configure sidebar grid to expand vertically
+    #allows sidebar to expand vertically
     sidebar.grid_rowconfigure(4, weight=1)  
-
+    
+    #return the sidebar for use across different windows
     return sidebar
 
-# Function to create the dashboard view
+#function to create the dashboard view
 def create_dashboard():
+    #global the widgets from the import screen and the frame from this screen so we can tell what window we arey in
     global dashboard_frame, image_label, import_button
-    # Hide the initial widgets
+
+    #hide the import screen widgets
     image_label.grid_forget()
     import_button.grid_forget()
 
-    # Hide the times frame if it's visible
+    #hide the times frame if it's visible
     if 'times_frame' in globals() and times_frame.winfo_exists():
         times_frame.grid_forget()
 
-    # Now create dashboard_frame and use grid
+    #create dashboard_frame
     dashboard_frame = ctk.CTkFrame(app, fg_color="#A9A9A9")
     dashboard_frame.grid(row=0, column=0, sticky="nsew", columnspan=1, rowspan=1)
-
-    # Grid configuration for the dashboard frame
-    dashboard_frame.grid_columnconfigure(0, weight=0)  # Sidebar column
-    dashboard_frame.grid_columnconfigure(1, weight=1)  # Content column
+    dashboard_frame.grid_columnconfigure(0, weight=0)  
+    dashboard_frame.grid_columnconfigure(1, weight=1)  
     dashboard_frame.grid_rowconfigure(0, weight=1)
 
-    # Create the sidebar
+    # Create the sidebar using function
     sidebar = create_sidebar(
         dashboard_frame,
         times_command=show_times,
         download_command=download_results  # Implement this function
     )
 
-    # Main content area with two stacked frames
+    #main content area 
     results_area = ctk.CTkFrame(dashboard_frame, corner_radius=20, fg_color="#A9A9A9")
     results_area.grid(row=0, column=1, sticky="nsew", padx=10, pady=10)
     results_area.grid_rowconfigure(0, weight=1)
     results_area.grid_rowconfigure(1, weight=1)
     results_area.grid_columnconfigure(0, weight=1)
 
-    # Create the two stacked frames
+    #upper frame for varsity results
     upper_box = ctk.CTkFrame(results_area, fg_color="#932b2c")
     upper_box.grid(row=0, column=0, sticky="nsew", padx=10, pady=(10, 5))
     upper_box.grid_rowconfigure(0, weight=0)
     upper_box.grid_rowconfigure(1, weight=1)
     upper_box.grid_columnconfigure(0, weight=1)
 
+    #lower frame for jv results
     lower_box = ctk.CTkFrame(results_area, fg_color="#932b2c")
     lower_box.grid(row=1, column=0, sticky="nsew", padx=10, pady=(5, 10))
     lower_box.grid_rowconfigure(0, weight=0)
     lower_box.grid_rowconfigure(1, weight=1)
     lower_box.grid_columnconfigure(0, weight=1)
 
-    # Now, display the varsity and JV results in the upper and lower boxes
+    #call display results for varsity and jv in the upper and lower boxes
     display_results(upper_box, varsity_results, "Varsity Results")
     display_results(lower_box, jv_results, "Junior Varsity Results")
 
-
-# Placeholder function for download functionality
+#function to download results
 def download_results():
-    # Implement the download functionality here
-    pass
+    # prompt the user to select a file save location
+    file_path = filedialog.asksaveasfilename(
+        defaultextension=".csv",
+        filetypes=[("CSV files", "*.csv")],
+        title="save results as"
+    )
 
-# Function to show the times view
+    #open the file in write mode to write into csv
+    with open(file_path, mode='w', newline='') as csv_file:
+            writer = csv.writer(csv_file)
+            # write headers
+            writer.writerow([
+                "type",
+                "matchup",
+                "team 1 name",
+                "team 1 score",
+                "team 2 name",
+                "team 2 score",
+                "winner",
+                "runner name",
+                "runner team",
+                "runner new place"
+            ])
+
+            # function to write matchup and runners
+            def write_results(results, category):
+                for matchup, data in results.items():
+                    writer.writerow([
+                        "",            
+                        "",             
+                        "", 
+                        "",
+                        "", 
+                        "",
+                        "",      
+                        "",                 
+                        "",                  
+                        ""                   
+                    ])
+                    #write teams and scores
+                    writer.writerow([
+                        category,            
+                        matchup,             
+                        data["Team 1 Name"], 
+                        data["Team 1 Score"],
+                        data["Team 2 Name"], 
+                        data["Team 2 Score"],
+                        data["Winner"],      
+                        "",                 
+                        "",                  
+                        ""                   
+                    ])
+
+                    # write runners for team 1
+                    for athlete_info in data["Team 1 Results"]:
+                        runner_name, runner_place = athlete_info.split(" - ")
+                        writer.writerow([
+                            "runner",            
+                            "",            
+                            "",                 
+                            "",                  
+                            "",                  
+                            "",                   
+                            "",                   
+                            runner_name,         
+                            data["Team 1 Name"], 
+                            runner_place          
+                        ])
+
+                    # write runners for team 2
+                    for athlete_info in data["Team 2 Results"]:
+                        runner_name, runner_place = athlete_info.split(" - ")
+                        writer.writerow([
+                            "runner",
+                            "",
+                            "",
+                            "",
+                            "",
+                            "",
+                            "",
+                            runner_name,
+                            data["Team 2 Name"],
+                            runner_place
+                        ])
+
+                    #write runners in rest team 1
+                    for athlete_info in data.get("Team 1 Rest", []):
+                        runner_name, runner_place = athlete_info.split(" - ")
+                        writer.writerow([
+                            "runner",
+                            "",
+                            "",
+                            "",
+                            "",
+                            "",
+                            "",
+                            runner_name,
+                            data["Team 1 Name"],
+                            runner_place
+                        ])
+
+                    #write runners in rest team 2
+                    for athlete_info in data.get("Team 2 Rest", []):
+                        runner_name, runner_place = athlete_info.split(" - ")
+                        writer.writerow([
+                            "runner",
+                            "",
+                            "",
+                            "",
+                            "",
+                            "",
+                            "",
+                            runner_name,
+                            data["Team 2 Name"],
+                            runner_place
+                        ])
+
+            # write varsity results
+            write_results(varsity_results, "varsity")
+
+            # write junior varsity results
+            write_results(jv_results, "junior varsity")
+
+#function to show the times view
 def show_times():
-    # Hide the dashboard frame
+    #global the times frame so we can tell what window it is in
+    global times_frame
+
+    #hide the dashboard frame if it's visible
     if 'dashboard_frame' in globals() and dashboard_frame.winfo_exists():
         dashboard_frame.grid_forget()
 
-    global times_frame
+    #create the times frame
     times_frame = ctk.CTkFrame(app, fg_color="#A9A9A9")
     times_frame.grid(row=0, column=0, sticky="nsew", columnspan=1, rowspan=1)
-
-    # Grid configuration for the times frame
     times_frame.grid_columnconfigure(0, weight=0) 
     times_frame.grid_columnconfigure(1, weight=1)  
     times_frame.grid_rowconfigure(0, weight=1)
 
-    # Create sidebar
+    #create sidebar fro funtion
     sidebar = create_sidebar(
-        times_frame,
-        times_command=None,  
+        times_frame, 
         scoring_command=create_dashboard, 
         download_command=download_results  
     )
 
-    # Main content area
+    #create main content area
     content_frame = ctk.CTkFrame(times_frame, fg_color="#A9A9A9")
     content_frame.grid(row=0, column=1, sticky="nsew", padx=10, pady=10)
     content_frame.grid_columnconfigure(0, weight=1)
     content_frame.grid_rowconfigure(0, weight=1)
 
-    # Create a frame similar to upper_box in display_results
+    #create a frame for the times 
     times_box = ctk.CTkFrame(content_frame, fg_color="#932b2c")
     times_box.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
     times_box.grid_columnconfigure(0, weight=1)
     times_box.grid_rowconfigure(0, weight=0)
     times_box.grid_rowconfigure(1, weight=1)
 
-    # Create title label
+    #create the title label
     title_label = ctk.CTkLabel(times_box, text="Athlete Times", font=("Arial", 30, "bold"), text_color="white")
     title_label.grid(row=0, column=0, pady=10)
 
-    # Create a frame to hold the Treeview
+    #create a frame to hold the treeview
     tree_frame = ctk.CTkFrame(times_box, fg_color="#A9A9A9")
     tree_frame.grid(row=1, column=0, sticky="nsew", padx=10, pady=10)
     tree_frame.grid_columnconfigure(0, weight=1)
     tree_frame.grid_rowconfigure(0, weight=1)
 
-    # Configure the style for Treeview to match the app's theme
-    style = ttk.Style()
-    style.theme_use("default")
-
-    # Set the Treeview style to match the colors
-    style.configure("Custom.Treeview",
-                    background="#ffffff",
-                    foreground="black",
-                    rowheight=25,
-                    fieldbackground="#ffffff",
-                    bordercolor="#A9A9A9",
-                    borderwidth=0)
-
-    style.map('Custom.Treeview', background=[('selected', '#932b2c')])
-
+    #create the treeview to display times
     tree_columns = ("Place", "Name", "Team", "Time")
-    tree = ttk.Treeview(tree_frame, columns=tree_columns, show="headings", style="Custom.Treeview")
+    tree = ttk.Treeview(tree_frame, columns=tree_columns, show="headings")
     tree.grid(row=0, column=0, sticky='nsew')
 
-    # Define headings with custom fonts
+    #define headings of tree view
     for col in tree_columns:
         tree.heading(col, text=col)
         tree.column(col, anchor="center")
 
-    # Access athletes_list
-    # Sort athletes_list by place
+    #access athletes_list and sort athletes_list by place
     sorted_athletes = sorted(athletes_list, key=lambda x: int(x.place))
 
-    # Insert data
+    #insert data into treeview
     for athlete in sorted_athletes:
         tree.insert("", "end", values=(athlete.place, athlete.name, athlete.team, str(athlete.time)))
 
-    # Add scrollbar
+    #add scrollbar to tree view
     scrollbar = ttk.Scrollbar(tree_frame, orient="vertical", command=tree.yview)
     tree.configure(yscroll=scrollbar.set)
     scrollbar.grid(row=0, column=1, sticky='ns')
 
-    # Optional: Adjust the appearance of the scrollbar to match the theme
-    style.configure("Vertical.TScrollbar",
-                    gripcount=0,
-                    background="#A9A9A9",
-                    darkcolor="#A9A9A9",
-                    lightcolor="#A9A9A9",
-                    troughcolor="#A9A9A9",
-                    bordercolor="#A9A9A9",
-                    arrowcolor="#A9A9A9")
-
+#function to display the results of each matchup
 def display_results(frame, results, title):
-    # Create title label
+
+    #create title label for varsity or junior varisty
     title_label = ctk.CTkLabel(
         frame, 
         text=title, 
@@ -421,77 +532,85 @@ def display_results(frame, results, title):
     )
     title_label.grid(row=0, column=0, pady=10, sticky="nsew", padx=10)
 
-    # Create a frame for the scrollable area
+    #create a frame for the scrollable area,
     scrollable_frame = ctk.CTkFrame(frame, fg_color="#A9A9A9")
     scrollable_frame.grid(row=1, column=0, sticky="nsew", padx=10, pady=10)
     scrollable_frame.grid_columnconfigure(0, weight=1)
     scrollable_frame.grid_rowconfigure(0, weight=1)
 
-    # Create a canvas and a scrollbar
+    #create a canvas in the scrollable frame 
     canvas = ctk.CTkCanvas(scrollable_frame, bg="#A9A9A9", highlightthickness=0)
+
+    #create a scrollbar inside the scrollable frame and link it to the canvas's yview 
     scrollbar = ttk.Scrollbar(scrollable_frame, orient="vertical", command=canvas.yview)
+
+    #allow the canvas to update the scrollbar position during scrolling
     canvas.configure(yscrollcommand=scrollbar.set)
 
-    # Create a frame inside the canvas to hold the scrollable content
+    # create a frame inside the canvas to hold the scrollable content
     scrollable_content = ctk.CTkFrame(canvas, fg_color="#A9A9A9")
 
-    # Add the scrollable_content to the canvas
+    #add the scrollable_content frame to the canvas
     scrollable_window = canvas.create_window((0, 0), window=scrollable_content, anchor="nw")
 
-    # Bind the <Configure> event of scrollable_content to update the scrollregion
+    #bind the <Configure> event of scrollable_content to update the scroll region when the content size changes
     scrollable_content.bind(
         "<Configure>",
         lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
     )
 
-    # Bind the <Configure> event of the canvas to adjust the width of scrollable_content
+    #define a function to adjust the width of the scrollable_content frame to match the canvas width
     def on_canvas_configure(event):
         canvas.itemconfig(scrollable_window, width=event.width)
 
+    #bind the <Configure> event of the canvas to call the function that adjusts the width of scrollable_content
     canvas.bind("<Configure>", on_canvas_configure)
 
-    # Pack the canvas and scrollbar
+    #pack the canvas to fill the left side of the scrollable frame
     canvas.pack(side="left", fill="both", expand=True)
+
+    #pack the scrollbar on the right side of the scrollable frame
     scrollbar.pack(side="right", fill="y")
 
-    # Create frames to hold the matchups
+    #create frames to hold the matchups
     matchups_frame = ctk.CTkFrame(scrollable_content, fg_color="#A9A9A9")
     matchups_frame.pack(fill="both", expand=True, padx=10, pady=10)
     
-    # Calculate the number of teams
+    #calculate the number of teams using a set
     team_names = set()
     for data in results.values():
         team_names.add(data['Team 1 Name'])
         team_names.add(data['Team 2 Name'])
     number_of_teams = len(team_names)
     
+    #calulate the number of columns based on the number of teams, matchups
     if number_of_teams <= 3:
         columns = int(number_of_teams * (number_of_teams - 1) / 2)
     else:
         columns = 3
 
-    # Configure the columns to be even
+    #make the columns evenly sizes 
     for col in range(columns):
         matchups_frame.grid_columnconfigure(col, weight=1, uniform="matchup")
 
-    # Variables to loop through making matchups
+    #variables to placement of matchup frames
     current_column = 0
     current_row = 0
 
-    # For each matchup, create a frame inside matchups_frame
+    #for each matchup create a frame inside matchups_frame
     for matchup_key, data in results.items():
         matchup_frame = ctk.CTkFrame(matchups_frame, fg_color="#992b2c", corner_radius=10)
         matchup_frame.grid(row=current_row, column=current_column, padx=10, pady=10, sticky="nsew")
         matchup_frame.grid_rowconfigure(0, weight=1)
         matchup_frame.grid_columnconfigure(0, weight=1)
 
-        # Update column and row counters
+        #update column and row counters for placement
         current_column += 1
         if current_column >= columns:
             current_column = 0
             current_row += 1
 
-        # Teams Title
+        #add a title to each matchup frame
         teams_title = f"{data['Team 1 Name']} vs {data['Team 2 Name']}"
         teams_label = ctk.CTkLabel(
             matchup_frame, 
@@ -501,23 +620,23 @@ def display_results(frame, results, title):
         )
         teams_label.grid(row=0, column=0, pady=5, sticky="nsew", padx=10)
 
-        # Columns Frame
+        #columns frame to hold the results for each teams
         columns_frame = ctk.CTkFrame(matchup_frame, fg_color="#A9A9A9")
         columns_frame.grid(row=1, column=0, pady=5, padx=5, sticky="nsew")
         columns_frame.grid_columnconfigure(0, weight=1)
         columns_frame.grid_columnconfigure(1, weight=1)
 
-        # Team 1 Frame
+        #team 1 results frame
         team1_frame = ctk.CTkFrame(columns_frame, fg_color="#ffffff")
         team1_frame.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
         team1_frame.grid_columnconfigure(0, weight=1)
 
-        # Team 2 Frame
+        #team 2 results frame 
         team2_frame = ctk.CTkFrame(columns_frame, fg_color="#ffffff")
         team2_frame.grid(row=0, column=1, sticky="nsew", padx=5, pady=5)
         team2_frame.grid_columnconfigure(0, weight=1)
 
-        # Team 1 Results
+        #team 1 label for results frame
         team1_label = ctk.CTkLabel(
             team1_frame, 
             text=data['Team 1 Name'], 
@@ -525,8 +644,10 @@ def display_results(frame, results, title):
             anchor="center"
         )
         team1_label.grid(row=0, column=0, pady=5, padx=5, sticky="nsew")
-
+        
+        #loops through atheletes in team 1 results to create labels for 1 to 5 runners
         for i, athlete_info in enumerate(data['Team 1 Results']):
+            print(data["Team 1 Results"])
             athlete_label = ctk.CTkLabel(
                 team1_frame, 
                 text=f"{athlete_info}", 
@@ -536,7 +657,7 @@ def display_results(frame, results, title):
             )
             athlete_label.grid(row=i + 1, column=0, padx=5, pady=2, sticky="nsew")
 
-        # Separator for extra runners (Team 1)
+        #separator for extra runners
         separator = ctk.CTkLabel(
             team1_frame, 
             text="--", 
@@ -546,7 +667,7 @@ def display_results(frame, results, title):
         )
         separator.grid(row=6, column=0, padx=5, pady=2, sticky="nsew")
 
-        # Display the 6th and 7th runners (Team 1)
+        #loops through atheletes in team 1 rest to create labels for 6 and 7 runners
         for i, athlete_info in enumerate(data['Team 1 Rest'], start=7):
             athlete_label = ctk.CTkLabel(
                 team1_frame, 
@@ -557,7 +678,7 @@ def display_results(frame, results, title):
             )
             athlete_label.grid(row=i, column=0, padx=5, pady=2, sticky="nsew")
 
-        # Total at the bottom (Team 1)
+        #total score for team 1 at the bottom
         team1_total_label = ctk.CTkLabel(
             team1_frame, 
             text=f"Total: {data['Team 1 Score']}", 
@@ -566,7 +687,7 @@ def display_results(frame, results, title):
         )
         team1_total_label.grid(row=9, column=0, pady=5, padx=5, sticky="nsew")
 
-        # Team 2 Results
+        #team 2 label for results frame
         team2_label = ctk.CTkLabel(
             team2_frame, 
             text=data['Team 2 Name'], 
@@ -575,6 +696,7 @@ def display_results(frame, results, title):
         )
         team2_label.grid(row=0, column=0, pady=5, padx=5, sticky="nsew")
 
+        #loops through atheletes in team 2 results to create labels for 1 to 5 runners
         for i, athlete_info in enumerate(data['Team 2 Results']):
             athlete_label = ctk.CTkLabel(
                 team2_frame, 
@@ -585,7 +707,7 @@ def display_results(frame, results, title):
             )
             athlete_label.grid(row=i + 1, column=0, padx=5, pady=2, sticky="nsew")
 
-        # Separator for extra runners (Team 2)
+        #seperator for extra runners
         separator = ctk.CTkLabel(
             team2_frame, 
             text="--", 
@@ -595,7 +717,7 @@ def display_results(frame, results, title):
         )
         separator.grid(row=6, column=0, padx=5, pady=2, sticky="nsew")
 
-        # Display the 6th and 7th runners (Team 2)
+        #loops through atheletes in team 2 rest to create labels for 6 and 7 runners
         for i, athlete_info in enumerate(data['Team 2 Rest'], start=7):
             athlete_label = ctk.CTkLabel(
                 team2_frame, 
@@ -606,7 +728,7 @@ def display_results(frame, results, title):
             )
             athlete_label.grid(row=i, column=0, padx=5, pady=2, sticky="nsew")
 
-        # Total at the bottom (Team 2)
+        #total score for team 2 at the bottom
         team2_total_label = ctk.CTkLabel(
             team2_frame, 
             text=f"Total: {data['Team 2 Score']}", 
@@ -615,7 +737,7 @@ def display_results(frame, results, title):
         )
         team2_total_label.grid(row=9, column=0, pady=5, padx=5, sticky="nsew")
 
-        # Winner Label
+        #winner of team 1 vs team 2 label
         winner_label = ctk.CTkLabel(
             matchup_frame, 
             text=f"Winner: {data['Winner']}", 
@@ -625,28 +747,26 @@ def display_results(frame, results, title):
         )
         winner_label.grid(row=2, column=0, pady=5, sticky="nsew", padx=10)
 
-# Create the main window
+#create the main window
 app = ctk.CTk()
 app.title("Cross Country Scorer Application")
 app.geometry("1500x920")
 
-# Set the appearance mode and color theme
+#set the appearance mode and color theme
 ctk.set_appearance_mode("light")
 app.configure(fg_color="#A9A9A9")
-
-# Configure grid columns and rows to expand and adjust
 app.grid_columnconfigure(0, weight=1)
 app.grid_rowconfigure(0, weight=1)
 
-# Load the image using CTkImage
+#load the main image for import screen 
 image_path = "cl_topics_a/projects/xc_girls/xc.png"
-image = ctk.CTkImage(Image.open(image_path), size=(485, 540))
+image = ctk.CTkImage(Image.open(image_path), size=(585, 640))
 
-# Create a label for the image
+#create a label for the image to display it
 image_label = ctk.CTkLabel(app, image=image, text="")
 image_label.grid(row=0, column=0, padx=20, pady=(10, 0), sticky="nsew")
 
-# Create the "Import Race Results" button
+#create the "Import Race Results" button
 import_button = ctk.CTkButton(
     app,
     text="Import Race Results",
