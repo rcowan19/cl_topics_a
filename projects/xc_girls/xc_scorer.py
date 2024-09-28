@@ -329,7 +329,7 @@ def create_dashboard():
 
 #function to download results
 def download_results():
-    # prompt the user to select a file save location
+    #prompt the user to select a file save location
     file_path = filedialog.asksaveasfilename(
         defaultextension=".csv",
         filetypes=[("CSV files", "*.csv")],
@@ -338,119 +338,131 @@ def download_results():
 
     #open the file in write mode to write into csv
     with open(file_path, mode='w', newline='') as csv_file:
-            writer = csv.writer(csv_file)
-            # write headers
-            writer.writerow([
-                "type",
-                "matchup",
-                "team 1 name",
-                "team 1 score",
-                "team 2 name",
-                "team 2 score",
-                "winner",
-                "runner name",
-                "runner team",
-                "runner new place"
-            ])
+        writer = csv.writer(csv_file)
+        #write headers
+        writer.writerow([
+            "Type",
+            "Matchup",
+            "Team 1 Name",
+            "Team 1 Score",
+            "Team 2 Name",
+            "Team 2 Score",
+            "Winner",
+            "Runner Name",
+            "Runner Team",
+            "Runner New Place",
+            "Runner Time"
+        ])
 
-            # function to write matchup and runners
-            def write_results(results, category):
-                for matchup, data in results.items():
+        #function to write matchup and runners
+        def write_results(results, category, list):
+            for matchup, data in results.items():
+                writer.writerow([
+                    "",
+                    "",
+                    "",
+                    "",
+                    "",
+                    "",
+                    "",
+                    "",
+                    "",
+                    "",
+                    ""
+                ])
+
+                #write teams and scores
+                writer.writerow([
+                    category,
+                    matchup,
+                    data["Team 1 Name"],
+                    data["Team 1 Score"],
+                    data["Team 2 Name"],
+                    data["Team 2 Score"],
+                    data["Winner"],
+                    "",
+                    "",
+                    "",
+                    ""
+                ])
+
+                #write runners for team 1
+                for athlete_info in data["Team 1 Results"]:
+                    runner_name, runner_place = athlete_info.split(" - ")
+                    athlete = next(a for a in athletes_list if a.name == runner_name and a.team == data["Team 1 Name"])
                     writer.writerow([
-                        "",            
-                        "",             
-                        "", 
                         "",
-                        "", 
                         "",
-                        "",      
-                        "",                 
-                        "",                  
-                        ""                   
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        runner_name,
+                        data["Team 1 Name"],
+                        runner_place,
+                        str(athlete.time) 
                     ])
-                    #write teams and scores
+
+                #write runners for team 2
+                for athlete_info in data["Team 2 Results"]:
+                    runner_name, runner_place = athlete_info.split(" - ")
+                    athlete = next(a for a in athletes_list if a.name == runner_name and a.team == data["Team 2 Name"])
                     writer.writerow([
-                        category,            
-                        matchup,             
-                        data["Team 1 Name"], 
-                        data["Team 1 Score"],
-                        data["Team 2 Name"], 
-                        data["Team 2 Score"],
-                        data["Winner"],      
-                        "",                 
-                        "",                  
-                        ""                   
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        runner_name,
+                        data["Team 2 Name"],
+                        runner_place,
+                        str(athlete.time) 
                     ])
 
-                    # write runners for team 1
-                    for athlete_info in data["Team 1 Results"]:
-                        runner_name, runner_place = athlete_info.split(" - ")
-                        writer.writerow([
-                            "runner",            
-                            "",            
-                            "",                 
-                            "",                  
-                            "",                  
-                            "",                   
-                            "",                   
-                            runner_name,         
-                            data["Team 1 Name"], 
-                            runner_place          
-                        ])
+                #write runners in rest for team 1
+                for athlete_info in data.get("Team 1 Rest", []):
+                    runner_name, runner_place = athlete_info.split(" - ")
+                    athlete = next(a for a in athletes_list if a.name == runner_name and a.team == data["Team 1 Name"])
+                    writer.writerow([
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        runner_name,
+                        data["Team 1 Name"],
+                        runner_place,
+                        str(athlete.time)
+                    ])
 
-                    # write runners for team 2
-                    for athlete_info in data["Team 2 Results"]:
-                        runner_name, runner_place = athlete_info.split(" - ")
-                        writer.writerow([
-                            "runner",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            runner_name,
-                            data["Team 2 Name"],
-                            runner_place
-                        ])
+                #write runners in rest for team 2
+                for athlete_info in data.get("Team 2 Rest", []):
+                    runner_name, runner_place = athlete_info.split(" - ")
+                    athlete = next(a for a in athletes_list if a.name == runner_name and a.team == data["Team 2 Name"])
+                    writer.writerow([
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        runner_name,
+                        data["Team 2 Name"],
+                        runner_place,
+                        str(athlete.time)
+                    ])
 
-                    #write runners in rest team 1
-                    for athlete_info in data.get("Team 1 Rest", []):
-                        runner_name, runner_place = athlete_info.split(" - ")
-                        writer.writerow([
-                            "runner",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            runner_name,
-                            data["Team 1 Name"],
-                            runner_place
-                        ])
+        #call write varsity results
+        write_results(varsity_results, "Varsity", athletes_list)
 
-                    #write runners in rest team 2
-                    for athlete_info in data.get("Team 2 Rest", []):
-                        runner_name, runner_place = athlete_info.split(" - ")
-                        writer.writerow([
-                            "runner",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            runner_name,
-                            data["Team 2 Name"],
-                            runner_place
-                        ])
-
-            # write varsity results
-            write_results(varsity_results, "varsity")
-
-            # write junior varsity results
-            write_results(jv_results, "junior varsity")
+        #call write junior varsity results
+        write_results(jv_results, "Junior Varsity", athletes_list)
 
 #function to show the times view
 def show_times():
@@ -502,7 +514,10 @@ def show_times():
     tree_columns = ("Place", "Name", "Team", "Time")
     tree = ttk.Treeview(tree_frame, columns=tree_columns, show="headings")
     tree.grid(row=0, column=0, sticky='nsew')
-
+    style = ttk.Style()
+    style.configure("Treeview", background="white", foreground="black", fieldbackground="blue", rowheight=75, font=("Arial", 36))
+    style.configure("Treeview.Heading", font=("Arial", 50, "bold"))
+                    
     #define headings of tree view
     for col in tree_columns:
         tree.heading(col, text=col)
