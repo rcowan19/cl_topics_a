@@ -290,8 +290,7 @@ def create_dashboard():
 
     #create dashboard_frame
     dashboard_frame = ctk.CTkFrame(app, fg_color="#A9A9A9")
-    dashboard_frame.grid(row=0, column=0, sticky="nsew", columnspan=1, rowspan=1)
-    dashboard_frame.grid_columnconfigure(0, weight=0)  
+    dashboard_frame.grid(row=0, column=0, sticky="nsew", columnspan=1, rowspan=1) 
     dashboard_frame.grid_columnconfigure(1, weight=1)  
     dashboard_frame.grid_rowconfigure(0, weight=1)
 
@@ -299,7 +298,7 @@ def create_dashboard():
     sidebar = create_sidebar(
         dashboard_frame,
         times_command=show_times,
-        download_command=download_results  # Implement this function
+        download_command=download_results  
     )
 
     #main content area 
@@ -312,14 +311,12 @@ def create_dashboard():
     #upper frame for varsity results
     upper_box = ctk.CTkFrame(results_area, fg_color="#932b2c")
     upper_box.grid(row=0, column=0, sticky="nsew", padx=10, pady=(10, 5))
-    upper_box.grid_rowconfigure(0, weight=0)
     upper_box.grid_rowconfigure(1, weight=1)
     upper_box.grid_columnconfigure(0, weight=1)
 
     #lower frame for jv results
     lower_box = ctk.CTkFrame(results_area, fg_color="#932b2c")
     lower_box.grid(row=1, column=0, sticky="nsew", padx=10, pady=(5, 10))
-    lower_box.grid_rowconfigure(0, weight=0)
     lower_box.grid_rowconfigure(1, weight=1)
     lower_box.grid_columnconfigure(0, weight=1)
 
@@ -476,7 +473,6 @@ def show_times():
     #create the times frame
     times_frame = ctk.CTkFrame(app, fg_color="#A9A9A9")
     times_frame.grid(row=0, column=0, sticky="nsew", columnspan=1, rowspan=1)
-    times_frame.grid_columnconfigure(0, weight=0) 
     times_frame.grid_columnconfigure(1, weight=1)  
     times_frame.grid_rowconfigure(0, weight=1)
 
@@ -497,7 +493,6 @@ def show_times():
     times_box = ctk.CTkFrame(content_frame, fg_color="#932b2c")
     times_box.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
     times_box.grid_columnconfigure(0, weight=1)
-    times_box.grid_rowconfigure(0, weight=0)
     times_box.grid_rowconfigure(1, weight=1)
 
     #create the title label
@@ -571,7 +566,7 @@ def display_results(frame, results, title):
     #bind the <Configure> event of scrollable_content to update the scroll region when the content size changes
     scrollable_content.bind(
         "<Configure>",
-        lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        lambda x: canvas.configure(scrollregion=canvas.bbox("all"))
     )
 
     #define a function to adjust the width of the scrollable_content frame to match the canvas width
