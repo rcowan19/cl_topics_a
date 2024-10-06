@@ -1,0 +1,6 @@
+name,type,min_students,max_students,priority,periods
+Library Duty,E,1,3,8,"1,2,3"
+Cafeteria,T,2,5,10,"1,3,4"
+PHI,E,2,4,6,"2,3"
+SNUG,E,1,2,9,"1,4"
+Mailroom,T,3,6,7,"2,3,4"
