@@ -5,17 +5,20 @@ import csv
 
 # Define the Student class
 class Student:
+    # init to allow the student to have all needed information
     def __init__(self, name, frees, grade, free_number):
         self.name = name
         self.frees = frees
         self.grade = grade
         self.free_number = free_number
 
+    # allows the student object to print
     def __repr__(self):
         return f"{self.name} (Grade: {self.grade}, Free Periods: {self.frees})"
 
 # Define the Workjob class
 class Workjob:
+    # init to allow the workjob to store all relevant information and calls the classify function
     def __init__(self, name, w_type, min_students, max_students, priority, periods):
         self.name = name
         self.type = w_type
@@ -27,9 +30,10 @@ class Workjob:
         self.max_period = None
         self.min_total = None
         self.max_total = None
-        self.assigned_students = {period: [] for period in periods}
+        self.assigned_students = {period: [] for period in periods}  # Keep track of assigned students per period
         self.classify_workjob()
 
+    # function to classify the workjob as type T or E and assign it with proper min and max limits
     def classify_workjob(self):
         if self.type == "T":
             self.min_period = 1
@@ -37,11 +41,12 @@ class Workjob:
             self.max_total = self.max
             self.min_total = self.min
         elif self.type == "E":
-            self.min_period = self.min
-            self.max_period = self.max
+            self.min_period = self.min  # Min students per period for type E
+            self.max_period = self.max  # Max students per period for type E
             self.min_total = len(self.periods) * self.min
             self.max_total = len(self.periods) * self.max
     
+    # function to decide whether a student can be assigned to a period; checks period max/min and total max/min
     def can_assign_student_to_period(self, period):
         if len(self.assigned_students[period]) >= self.max_period:
             return False
@@ -50,11 +55,13 @@ class Workjob:
             return False
         return True
 
+    # allows workjob object to print
     def __repr__(self):
         return (f"Workjob: {self.name}, Type: {self.type}, Periods: {self.periods}, Priority: {self.priority}, "
                 f"Min Period Requirements: {self.min_period}, Max Period Requirement: {self.max_period}, "
                 f"Min Student Total: {self.min_total}, Max Student Total: {self.max_total}")
 
+# Define the period mapping
 period_mapping = {
     '1': ['D1B1', 'D2B2', 'D3B3', 'D4B4', 'D5B5', 'D6B6', 'D7B7'],
     '2': ['D1B2', 'D2B3', 'D3B4', 'D4B5', 'D5B6', 'D6B7', 'D7B1'],
@@ -66,6 +73,7 @@ period_mapping = {
     'B6': ['D3B6', 'D4B6', 'D5B6', 'D6B6'],
 }
 
+# Read student information from CSV and keep all relevant free periods information
 def read_student_file(filename):
     students = []
     with open(filename, 'r') as file:
@@ -82,6 +90,7 @@ def read_student_file(filename):
             students.append(Student(name, free_list, grade, free_number))
     return students
 
+# Read workjob information from CSV and keep all relevant information about it
 def read_workjob_file(filename):
     workjobs = []
     with open(filename, 'r', encoding='utf-8-sig') as file:
@@ -102,13 +111,17 @@ def read_workjob_file(filename):
             workjobs.append(Workjob(name, w_type, min_students, max_students, priority, periods))
     return workjobs
 
+# Assigns students to workjobs based on their free periods and job requirements
 def assign_students_to_workjobs(students, workjobs):
+    # Initialize variables
     unassigned_students = []
     assignments = []
 
+    # Sort workjobs and students by free periods and priority
     sorted_students = sorted(students, key=lambda x: int(x.free_number))
     workjobs.sort(key=lambda job: job.priority)
 
+    # Attempt to fill all the workjobs up to their minimum totals
     for student in sorted_students:
         assigned = False
         for workjob in workjobs:
@@ -126,6 +139,7 @@ def assign_students_to_workjobs(students, workjobs):
         if not assigned:
             unassigned_students.append(student)
     
+    # Fill remaining periods to meet the minimum number of students
     for workjob in workjobs:
         for period, assigned_students in workjob.assigned_students.items():
             if len(assigned_students) < workjob.min_period:
@@ -137,8 +151,9 @@ def assign_students_to_workjobs(students, workjobs):
                         if len(workjob.assigned_students[period]) >= workjob.min_period:
                             break  
     
+    # After minimums are full, start filling up to the max
     remaining_unassigned_students = unassigned_students.copy()
-    unassigned_students.clear()
+    unassigned_students.clear()  # Clear list before reassigning students
     for student in remaining_unassigned_students:
         assigned = False
         for workjob in workjobs:
@@ -155,12 +170,15 @@ def assign_students_to_workjobs(students, workjobs):
 
     return assignments, unassigned_students
 
+# Display error window for not enough students to fill the minimum workjobs
 def show_min_error_window(message):
     messagebox.showerror("Not enough students to fill min workjobs", message)
 
+# Display error window for too many students, exceeding the max workjob limits
 def show_max_error_window(message):
     messagebox.showerror("Too many students, over max workjobs", message)
 
+# Check if the number of students meets the min/max workjob requirements
 def check_minmax(students, workjobs):
     min_total = sum(workjob.min_total for workjob in workjobs)
     max_total = sum(workjob.max_total for workjob in workjobs)
@@ -170,43 +188,42 @@ def check_minmax(students, workjobs):
     elif len(students) > max_total:
         show_max_error_window(f"Too many students: {len(students)}. Maximum allowed is {max_total}.")
 
-# Initialize global variables
+# initialize global variables to hold the student and workjob data
 students = []
 workjobs = []
 
+# intialize tkinter
 root = tk.Tk()
 root.title("Workjob Assignment")
-
 frame = tk.Frame(root)
 frame.pack(pady=20)
 
+# function to upload the student CSV
 def upload_students():
     global students
     file_path = filedialog.askopenfilename()
     if file_path:
         students = read_student_file(file_path)
-        student_button.config(bg="green")
+        student_button.config(bg="green")  
 
+# function to upload the workjob CSV
 def upload_workjobs():
     global workjobs
     file_path = filedialog.askopenfilename()
     if file_path:
         workjobs = read_workjob_file(file_path)
-        workjob_button.config(bg="green")
+        workjob_button.config(bg="green")  
 
+# function to assign and export workjobs
 def assign_and_export():
     check_minmax(students, workjobs)
     if not students or not workjobs:
         messagebox.showerror("Error", "Please upload both student and workjob files before assigning.")
         return
     assignments, unassigned_students = assign_students_to_workjobs(students, workjobs)
-
-    # Ask user for location to save the CSV files
+    
+    # export assignments to CSV
     save_path = filedialog.asksaveasfilename(defaultextension='.csv', filetypes=[("CSV files", "*.csv")], title="Save assignments CSV")
-    if not save_path:
-        return
-
-    # Export assignments to CSV
     with open(save_path, mode='w', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(["Workjob", "Period", "Assigned Students"])
@@ -224,7 +241,7 @@ def assign_and_export():
                 else:
                     writer.writerow([workjob.name, period, "[Empty]"])
 
-    # Export unassigned students to a separate CSV if there are any
+    # export unassigned students to a separate CSV 
     if unassigned_students:
         unassigned_save_path = filedialog.asksaveasfilename(defaultextension='.csv', filetypes=[("CSV files", "*.csv")], title="Save unassigned students CSV")
         if unassigned_save_path:
@@ -240,15 +257,15 @@ def assign_and_export():
     else:
         print("\nAll students have been assigned.")
 
-# Modify the button to use the export functionality
+#buttons for UI
 assign_button = tk.Button(frame, text="Assign Students and Export to CSV", command=assign_and_export)
 assign_button.grid(row=1, column=0, columnspan=2, pady=10)
 
-# Buttons for uploading files
 student_button = tk.Button(frame, text="Upload Students CSV", command=upload_students)
 student_button.grid(row=0, column=0, padx=10)
 
 workjob_button = tk.Button(frame, text="Upload Workjobs CSV", command=upload_workjobs)
 workjob_button.grid(row=0, column=1, padx=10)
 
+# start the Tkinter event loop
 root.mainloop()
