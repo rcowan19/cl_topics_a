@@ -41,8 +41,8 @@ class Workjob:
             self.max_total = self.max
             self.min_total = self.min
         elif self.type == "E":
-            self.min_period = self.min  # Min students per period for type E
-            self.max_period = self.max  # Max students per period for type E
+            self.min_period = self.min  
+            self.max_period = self.max  
             self.min_total = len(self.periods) * self.min
             self.max_total = len(self.periods) * self.max
     
