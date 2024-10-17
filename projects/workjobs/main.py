@@ -1,9 +1,10 @@
-import tkinter as tk
+#import statements
+import customtkinter as ctk
 from tkinter import filedialog, messagebox
 from collections import defaultdict
 import csv
 
-# Define the Student class
+# define the Student class
 class Student:
     # init to allow the student to have all needed information
     def __init__(self, name, frees, grade, free_number):
@@ -16,7 +17,7 @@ class Student:
     def __repr__(self):
         return f"{self.name} (Grade: {self.grade}, Free Periods: {self.frees})"
 
-# Define the Workjob class
+# define the Workjob class
 class Workjob:
     # init to allow the workjob to store all relevant information and calls the classify function
     def __init__(self, name, w_type, min_students, max_students, priority, periods):
@@ -61,7 +62,7 @@ class Workjob:
                 f"Min Period Requirements: {self.min_period}, Max Period Requirement: {self.max_period}, "
                 f"Min Student Total: {self.min_total}, Max Student Total: {self.max_total}")
 
-# Define the period mapping
+# define the period mapping
 period_mapping = {
     '1': ['D1B1', 'D2B2', 'D3B3', 'D4B4', 'D5B5', 'D6B6', 'D7B7'],
     '2': ['D1B2', 'D2B3', 'D3B4', 'D4B5', 'D5B6', 'D6B7', 'D7B1'],
@@ -73,7 +74,7 @@ period_mapping = {
     'B6': ['D3B6', 'D4B6', 'D5B6', 'D6B6'],
 }
 
-# Read student information from CSV and keep all relevant free periods information
+# read student information from CSV and keep all relevant free periods information
 def read_student_file(filename):
     students = []
     with open(filename, 'r') as file:
@@ -90,7 +91,7 @@ def read_student_file(filename):
             students.append(Student(name, free_list, grade, free_number))
     return students
 
-# Read workjob information from CSV and keep all relevant information about it
+# read workjob information from CSV and keep all relevant information about it
 def read_workjob_file(filename):
     workjobs = []
     with open(filename, 'r', encoding='utf-8-sig') as file:
@@ -111,17 +112,17 @@ def read_workjob_file(filename):
             workjobs.append(Workjob(name, w_type, min_students, max_students, priority, periods))
     return workjobs
 
-# Assigns students to workjobs based on their free periods and job requirements
+# assigns students to workjobs based on their free periods and job requirements
 def assign_students_to_workjobs(students, workjobs):
-    # Initialize variables
+    # initialize variables
     unassigned_students = []
     assignments = []
 
-    # Sort workjobs and students by free periods and priority
+    # sort workjobs and students by free periods and priority
     sorted_students = sorted(students, key=lambda x: int(x.free_number))
     workjobs.sort(key=lambda job: job.priority)
 
-    # Attempt to fill all the workjobs up to their minimum totals
+    # attempt to fill all the workjobs up to their minimum totals
     for student in sorted_students:
         assigned = False
         for workjob in workjobs:
@@ -139,7 +140,7 @@ def assign_students_to_workjobs(students, workjobs):
         if not assigned:
             unassigned_students.append(student)
     
-    # Fill remaining periods to meet the minimum number of students
+    # fill remaining periods to meet the minimum number of students
     for workjob in workjobs:
         for period, assigned_students in workjob.assigned_students.items():
             if len(assigned_students) < workjob.min_period:
@@ -151,9 +152,9 @@ def assign_students_to_workjobs(students, workjobs):
                         if len(workjob.assigned_students[period]) >= workjob.min_period:
                             break  
     
-    # After minimums are full, start filling up to the max
+    # after minimums are full, start filling up to the max
     remaining_unassigned_students = unassigned_students.copy()
-    unassigned_students.clear()  # Clear list before reassigning students
+    unassigned_students.clear() 
     for student in remaining_unassigned_students:
         assigned = False
         for workjob in workjobs:
@@ -170,102 +171,227 @@ def assign_students_to_workjobs(students, workjobs):
 
     return assignments, unassigned_students
 
-# Display error window for not enough students to fill the minimum workjobs
-def show_min_error_window(message):
-    messagebox.showerror("Not enough students to fill min workjobs", message)
+#class used for application GUI
+class WorkjobDisplay(ctk.CTk):
+    def __init__(self):
+        super().__init__()
 
-# Display error window for too many students, exceeding the max workjob limits
-def show_max_error_window(message):
-    messagebox.showerror("Too many students, over max workjobs", message)
+        # configure window
+        self.title("Workjob Assignment System")
+        self.geometry("1000x700")
 
-# Check if the number of students meets the min/max workjob requirements
-def check_minmax(students, workjobs):
-    min_total = sum(workjob.min_total for workjob in workjobs)
-    max_total = sum(workjob.max_total for workjob in workjobs)
+        # initialize variables
+        self.students = []
+        self.workjobs = []
+        
+        # create main layout
+        self.create_gui()
 
-    if len(students) < min_total:
-        show_min_error_window(f"Not enough students: {len(students)}. Minimum required is {min_total}.")
-    elif len(students) > max_total:
-        show_max_error_window(f"Too many students: {len(students)}. Maximum allowed is {max_total}.")
+    #function to create the main gui
+    def create_gui(self):
+        # create main container
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure(1, weight=1)
 
-# initialize global variables to hold the student and workjob data
-students = []
-workjobs = []
+        # create top frame 
+        self.top_frame = ctk.CTkFrame(self)
+        self.top_frame.grid(row=0, column=0, padx=20, pady=20, sticky="ew")
+        self.top_frame.grid_columnconfigure((0,1,2), weight=1)
 
-# intialize tkinter
-root = tk.Tk()
-root.title("Workjob Assignment")
-frame = tk.Frame(root)
-frame.pack(pady=20)
+        #create upload students button
+        self.student_button = ctk.CTkButton(
+            self.top_frame, 
+            text="Upload Students CSV",
+            command=self.upload_students
+        )
+        self.student_button.grid(row=0, column=0, padx=10, pady=10)
 
-# function to upload the student CSV
-def upload_students():
-    global students
-    file_path = filedialog.askopenfilename()
-    if file_path:
-        students = read_student_file(file_path)
-        student_button.config(bg="green")  
+        #create upload workjob button
+        self.workjob_button = ctk.CTkButton(
+            self.top_frame, 
+            text="Upload Workjobs CSV",
+            command=self.upload_workjobs
+        )
+        self.workjob_button.grid(row=0, column=1, padx=10, pady=10)
 
-# function to upload the workjob CSV
-def upload_workjobs():
-    global workjobs
-    file_path = filedialog.askopenfilename()
-    if file_path:
-        workjobs = read_workjob_file(file_path)
-        workjob_button.config(bg="green")  
+        # create export button
+        self.assign_button = ctk.CTkButton(
+            self.top_frame,
+            text="Assign & Display Results",
+            command=self.assign_and_display,
+            state="disabled"
+        )
+        self.assign_button.grid(row=0, column=2, padx=10, pady=10)
 
-# function to assign and export workjobs
-def assign_and_export():
-    check_minmax(students, workjobs)
-    if not students or not workjobs:
-        messagebox.showerror("Error", "Please upload both student and workjob files before assigning.")
-        return
-    assignments, unassigned_students = assign_students_to_workjobs(students, workjobs)
+        # create and add tabview for results
+        self.tabview = ctk.CTkTabview(self)
+        self.tabview.grid(row=1, column=0, padx=20, pady=(0,20), sticky="nsew")
+        self.tabview.add("Assignments")
+        self.tabview.add("Unassigned Students")
+     
+        # call functions that assign tabs to frames
+        self.setup_assignments_tab()
+        self.setup_unassigned_tab()
+
+    # function to create frame and assign tab for assignments
+    def setup_assignments_tab(self):
+        self.assignments_frame = ctk.CTkScrollableFrame(self.tabview.tab("Assignments"))
+        self.assignments_frame.pack(fill="both", expand=True, padx=10, pady=10)
+
+    # function to create frame and assign tab for unassigned
+    def setup_unassigned_tab(self):
+        self.unassigned_frame = ctk.CTkScrollableFrame(self.tabview.tab("Unassigned Students"))
+        self.unassigned_frame.pack(fill="both", expand=True, padx=10, pady=10)
+
+    # function to upload the student CSV and change button color
+    def upload_students(self):
+        file_path = filedialog.askopenfilename(filetypes=[("CSV files", "*.csv")])
+        if file_path:
+            self.students = read_student_file(file_path)
+            self.student_button.configure(fg_color="green")
+            self.check_enable_assign()
+
+    # function to upload the workjob CSV and change button color
+    def upload_workjobs(self):
+        file_path = filedialog.askopenfilename(filetypes=[("CSV files", "*.csv")])
+        if file_path:
+            self.workjobs = read_workjob_file(file_path)
+            self.workjob_button.configure(fg_color="green")
+            self.check_enable_assign()
+
+    #function to check if both files are uploaded and activate the assign button
+    def check_enable_assign(self):
+        if self.students and self.workjobs:
+            self.assign_button.configure(state="normal")
+
+    #function to clear the results frames
+    def clear_results(self):
+        for widget in self.assignments_frame.winfo_children():
+            widget.destroy()
+        for widget in self.unassigned_frame.winfo_children():
+            widget.destroy()
+            widget.destroy()
+
+    #function to call mix/max checker, add an export button, and display the results in the correct tab
+    def assign_and_display(self):
+        self.clear_results()
+        
+        #check min/max requirements by calculating workjob and students and comparing
+        min_total = sum(workjob.min_total for workjob in self.workjobs)
+        max_total = sum(workjob.max_total for workjob in self.workjobs)
+        if len(self.students) < min_total:
+            messagebox.showerror(
+                "Error",
+                f"Not enough students: {len(self.students)}. Minimum required is {min_total}."
+            )
+            return
+        elif len(self.students) > max_total:
+            messagebox.showerror(
+                "Error",
+                f"Too many students: {len(self.students)}. Maximum allowed is {max_total}."
+            )
+            return
+
+        # call assign fucntion and place relavant information into their tabs
+        assignments, unassigned_students = assign_students_to_workjobs(self.students, self.workjobs)
+        self.display_assignments(assignments)
+        self.display_unassigned(unassigned_students)
     
-    # export assignments to CSV
-    save_path = filedialog.asksaveasfilename(defaultextension='.csv', filetypes=[("CSV files", "*.csv")], title="Save assignments CSV")
-    with open(save_path, mode='w', newline='') as file:
-        writer = csv.writer(file)
-        writer.writerow(["Workjob", "Period", "Assigned Students"])
-        grouped_students = defaultdict(list)
+        #add export button after results are displayed
+        export_button = ctk.CTkButton(
+            self.top_frame,
+            text="Export Results to CSV",
+            command=lambda: self.export_results(assignments, unassigned_students)
+        )
+        export_button.grid(row=1, column=1, padx=10, pady=10)
+
+    #function to display the assigned students 
+    def display_assignments(self, assignments):
+        #groups assignment by workjob and period
+        grouped = defaultdict(lambda: defaultdict(list))
         for job, period, student in assignments:
-            grouped_students[(job, period)].append(student)
+            grouped[job][period].append(student)
 
-        workjobs_by_priority = sorted(workjobs, key=lambda w: w.priority)
-        for workjob in workjobs_by_priority:
-            for period in workjob.periods:
-                key = (workjob.name, period)
-                if key in grouped_students:
-                    grouped_students[key].sort()
-                    writer.writerow([workjob.name, period, ', '.join(grouped_students[key])])
-                else:
-                    writer.writerow([workjob.name, period, "[Empty]"])
+        #sorts the workjobs into priority
+        sorted_workjobs = sorted(self.workjobs, key=lambda x: x.priority)
 
-    # export unassigned students to a separate CSV 
-    if unassigned_students:
-        unassigned_save_path = filedialog.asksaveasfilename(defaultextension='.csv', filetypes=[("CSV files", "*.csv")], title="Save unassigned students CSV")
-        if unassigned_save_path:
-            with open(unassigned_save_path, mode='w', newline='') as file:
-                writer = csv.writer(file)
-                writer.writerow(["Unassigned Students"])
-                for student in unassigned_students:
-                    writer.writerow([student])
-        else:
-            print("\nUnassigned Students:")
+        #display assignments in priority order; creates frames for each workjob and smaller frames for each period, and adds the students names
+        for workjob in sorted_workjobs:
+            if workjob.name in grouped:
+                job_frame = ctk.CTkFrame(self.assignments_frame, fg_color="#f0f8ff")
+                job_frame.pack(fill="x", padx=5, pady=5)
+                header_text = f"Priority {workjob.priority} - {workjob.name}"
+                header = ctk.CTkLabel(
+                    job_frame,
+                    text=header_text,
+                    font=("Helvetica", 16, "bold"),
+                    text_color="#1e90ff"
+                )
+                header.pack(anchor="w", padx=10, pady=5)
+                for period, students in grouped[workjob.name].items():
+                    period_frame = ctk.CTkFrame(job_frame, fg_color="white")
+                    period_frame.pack(fill="x", padx=20, pady=2)
+                    
+                    period_text = f"Period {period}: {', '.join(sorted(students))}"
+                    period_label = ctk.CTkLabel(
+                        period_frame,
+                        text=period_text,
+                        wraplength=900,
+                        text_color="black"
+                    )
+                    period_label.pack(anchor="w", padx=10, pady=2)
+                    
+    #fucntion to display the unassigned students
+    def display_unassigned(self, unassigned_students):
+        #displays the students name if unassigned
+        if unassigned_students:
+            ctk.CTkLabel(
+                self.unassigned_frame,
+                text="Unassigned Students:",
+                font=("Helvetica", 16, "bold")
+            ).pack(anchor="w", padx=10, pady=5)
             for student in unassigned_students:
-                print(f"Student: {student}")
-    else:
-        print("\nAll students have been assigned.")
+                ctk.CTkLabel(
+                    self.unassigned_frame,
+                    text=f"• {student}"
+                ).pack(anchor="w", padx=20, pady=2)
+        #displays a message if all students are assigned
+        else:
+            ctk.CTkLabel(
+                self.unassigned_frame,
+                text="All students have been assigned!",
+                font=("Helvetica", 16)
+            ).pack(padx=10, pady=20)
 
-#buttons for UI
-assign_button = tk.Button(frame, text="Assign Students and Export to CSV", command=assign_and_export)
-assign_button.grid(row=1, column=0, columnspan=2, pady=10)
+    #function to export the results to a CSV
+    def export_results(self, assignments, unassigned_students):
+        #exports workjob, period, name of assigned students to a CSV
+        assignments_path = filedialog.asksaveasfilename(
+            defaultextension='.csv',
+            filetypes=[("CSV files", "*.csv")],
+            title="Save Assignments CSV"
+        )
+        if assignments_path:
+            with open(assignments_path, mode='w', newline='') as file:
+                writer = csv.writer(file)
+                writer.writerow(["Workjob", "Period", "Student"])
+                for assignment in assignments:
+                    writer.writerow(assignment)
 
-student_button = tk.Button(frame, text="Upload Students CSV", command=upload_students)
-student_button.grid(row=0, column=0, padx=10)
+        #exports name of unassigned students to CSV
+        if unassigned_students:
+            unassigned_path = filedialog.asksaveasfilename(
+                defaultextension='.csv',
+                filetypes=[("CSV files", "*.csv")],
+                title="Save Unassigned Students CSV"
+            )
+            if unassigned_path:
+                with open(unassigned_path, mode='w', newline='') as file:
+                    writer = csv.writer(file)
+                    writer.writerow(["Unassigned Students"])
+                    for student in unassigned_students:
+                        writer.writerow([student])
 
-workjob_button = tk.Button(frame, text="Upload Workjobs CSV", command=upload_workjobs)
-workjob_button.grid(row=0, column=1, padx=10)
-
-# start the Tkinter event loop
-root.mainloop()
+#call the main loop on the gui class
+WorkjobDisplay().mainloop()
+    
