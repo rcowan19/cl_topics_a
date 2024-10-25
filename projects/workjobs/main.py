@@ -677,10 +677,15 @@ class WorkjobDisplay(ctk.CTk):
         
             #find the workjob object corresponding to the selected workjob
             workjob_obj = next((wj for wj in self.workjobs if wj.name == selected_workjob), None)
+            sorted_periods = sorted(workjob_obj.periods, key=lambda period: (
+                int(period.split('B')[0][1:]),  
+                int(period.split('B')[1])      
+            ))
+
 
             if workjob_obj:
                 #for each period in the workjob, check if there are assigned students
-                for period in workjob_obj.periods:
+                for period in sorted_periods:
                     students_in_period = [assignment for assignment in assignments if assignment[1] == period]
                     if students_in_period:
                         for assignment in students_in_period:
