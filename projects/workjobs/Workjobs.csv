@@ -1,16 +1,16 @@
-﻿name,type,min,max,priority,periods
-PHI,T,6,8,2,"1, 2, 3, 4"
-Dining hall,E,2,4,1,"1, 3, 4"
-Campus pick up,E,2,4,1,1
-Bookstore,E,1,2,1,"1, 2, 3, 4"
-Mailroom,E,1,3,1,"1, 2, 3, 4"
-Cage,E,1,2,2,"2, 3, 4"
-Library,T,11,13,2,"1, 2, 4"
-Alumni/ Development,T,19,21,2,"1, 2, 3, 4"
-Communications,T,6,7,2,"1, 2, 3, 4"
-Athletics,E,2,3,3,"2, 3"
-Chaffee,E,1,3,10,B3
-RAC/ Nichols,E,1,3,10,"1, 2, 3, 4"
-Brush,E,1,3,10,"B2, B4"
-Clark,E,1,3,10,B6
-Scanlan,E,1,3,4,"2, 3, 4"
+﻿name,type,min,max,priority,periods,alt_name
+PHI,T,6,8,2,"1, 2, 3, 4",PHI
+Dining hall,E,2,4,1,"1, 3, 4",DINING
+Campus pick up,E,2,4,1,1,QUADPU
+Bookstore,E,1,2,1,"1, 2, 3, 4",BOOK
+Mailroom,E,1,3,1,"1, 2, 3, 4",MAIL
+Cage,E,1,2,2,"2, 3, 4",ATHCAGE
+Library,T,11,13,2,"1, 2, 4",LIBR
+Alumni/ Development,T,19,21,2,"1, 2, 3, 4",ALUM
+Communications,T,6,7,2,"1, 2, 3, 4", COMM
+Athletics,E,2,3,3,"2, 3",ATHCTRTD
+Chaffee,E,1,3,10,B3,CHAFTD
+RAC/ Nichols,E,1,3,10,"1, 2, 3, 4",RACNICHTD
+Brush,E,1,3,10,"B2, B4",BRTD
+Clark,E,1,3,10,B6,CLTD
+Scanlan,E,1,3,4,"2, 3, 4",SCANTD
