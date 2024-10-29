@@ -1,7 +1,6 @@
 #import statements
 import customtkinter as ctk
 from tkinter import filedialog, messagebox
-from collections import defaultdict
 import csv
 import os
 import json
@@ -81,42 +80,93 @@ period_mapping = {
 # read student information from CSV and keep all relevant free periods information
 def read_student_file(filename):
     students = []
-    with open(filename, 'r') as file:
-        reader_dict = csv.DictReader(file)
-        for row in reader_dict:
-            id = row["Person ID"]
-            name = row["Full Name"]
-            grade = row["Grade"]
-            frees = {}
-            for block in row.keys():
-                if block not in ["Person ID", "Full Name", "Grade"]:
-                    frees[block] = int(row[block]) if row[block] != '' else 0
-            free_list = [period for period, value in frees.items() if value == 1]
-            free_number = len(free_list)
-            students.append(Student(name, free_list, grade, free_number, id))
-    return students
+    success = True
+    invalid_rows = []  
+
+    try:
+        with open(filename, 'r') as file:
+            reader_dict = csv.DictReader(file)
+            required_columns = {"Person ID", "Full Name", "Grade"}
+            if not required_columns.issubset(reader_dict.fieldnames):
+                raise ValueError("CSV file is missing required columns.")
+
+            for idx, row in enumerate(reader_dict, start=1):
+                try:
+                    id = row["Person ID"]
+                    name = row["Full Name"]
+                    grade = row["Grade"]
+                    frees = {}
+                    for block in row.keys():
+                        if block not in ["Person ID", "Full Name", "Grade"]:
+                            frees[block] = int(row[block]) if row[block] != '' else 0
+
+                    free_list = [period for period, value in frees.items() if value == 1]
+                    free_number = len(free_list)
+                    students.append(Student(name, free_list, grade, free_number, id))
+                
+                except (ValueError, KeyError):
+                    success = False
+                    invalid_rows.append(idx)
+
+    except FileNotFoundError:
+        success = False
+        messagebox.showerror("File Not Found", f"The file '{filename}' was not found.")
+    except ValueError as ve:
+        success = False
+        messagebox.showerror("Column Error", f"Error: {ve}")
+    except Exception as e:
+        success = False
+        messagebox.showerror("Unexpected Error", f"An unexpected error occurred: {e}")
+
+    
+    if invalid_rows:
+        messagebox.showerror("Data Error", f"Invalid data in rows: {', '.join(map(str, invalid_rows))}")
+    
+    return students if success else None
 
 # read workjob information from CSV and keep all relevant information about it
 def read_workjob_file(filename):
     workjobs = []
-    with open(filename, 'r', encoding='utf-8-sig') as file:
-        reader_dict = csv.DictReader(file)
-        for row in reader_dict:
-            name = row["name"]
-            w_type = row["type"]
-            min_students = int(row["min"])
-            max_students = int(row["max"])
-            priority = int(row["priority"])
-            periods = []
-            elements = [element.strip() for element in row["periods"].split(',')]
-            for element in elements:
-                if element in period_mapping:
-                    periods.extend(period_mapping[element])
-                else:
-                    periods.append(element)
-            internal_name = row["alt_name"]
-            workjobs.append(Workjob(name, w_type, min_students, max_students, priority, periods, internal_name))
-    return workjobs
+    success = True
+    invalid_rows = []  
+
+    try:
+        with open(filename, 'r', encoding='utf-8-sig') as file:
+            reader_dict = csv.DictReader(file)
+            for idx, row in enumerate(reader_dict, start=1):
+                try:
+                    name = row["name"]
+                    w_type = row["type"]
+                    min_students = int(row["min"])
+                    max_students = int(row["max"])
+                    priority = int(row["priority"])
+                    periods = []
+                    elements = [element.strip() for element in row["periods"].split(',')]
+                    for element in elements:
+                        if element in period_mapping:
+                            periods.extend(period_mapping[element])
+                        else:
+                            periods.append(element)
+                    internal_name = row["alt_name"]
+                    workjobs.append(Workjob(name, w_type, min_students, max_students, priority, periods, internal_name))
+
+                except (ValueError, KeyError):
+                    success = False
+                    invalid_rows.append(idx)
+
+    except FileNotFoundError:
+        success = False
+        messagebox.showerror("File Not Found", f"The file '{filename}' was not found.")
+    except Exception as e:
+        success = False
+        messagebox.showerror("Unexpected Error", f"An unexpected error occurred: {e}")
+
+ 
+    if invalid_rows:
+        messagebox.showerror("Data Error", f"Invalid data in rows: {', '.join(map(str, invalid_rows))}")
+    
+    return workjobs if success else None
+    
 
 # assigns students to workjobs based on their free periods and job requirements
 def assign_students_to_workjobs(students, workjobs):
@@ -303,20 +353,26 @@ class WorkjobDisplay(ctk.CTk):
         file_path = filedialog.askopenfilename(filetypes=[("CSV files", "*.csv")])
         if file_path:
             self.students = read_student_file(file_path)
-            self.student_button.configure(fg_color="green")
-            self.saved_paths['student_file'] = file_path
-            self.save_config()
-            self.check_enable_assign()
-
+            if self.students is not None:  
+                self.student_button.configure(fg_color="green")
+                self.saved_paths['student_file'] = file_path
+                self.save_config()
+                self.check_enable_assign()
+            else:
+                self.student_button.configure(fg_color="#1f6aa5")
+    
     #fucntion that get called when  workjob button is clicked to allow upload of a file and call a fucntion to parse it
     def upload_workjobs(self):
         file_path = filedialog.askopenfilename(filetypes=[("CSV files", "*.csv")])
         if file_path:
             self.workjobs = read_workjob_file(file_path)
-            self.workjob_button.configure(fg_color="green")
-            self.saved_paths['workjob_file'] = file_path
-            self.save_config()
-            self.check_enable_assign()
+            if self.workjobs is not None:  # Only change color if loading was successful
+                self.workjob_button.configure(fg_color="green")
+                self.saved_paths['workjob_file'] = file_path
+                self.save_config()
+                self.check_enable_assign()
+            else:
+                self.workjob_button.configure(fg_color="#1f6aa5")
 
     #fucntion to intialize the assigned tab
     def setup_assignments_tab(self):
@@ -431,14 +487,14 @@ class WorkjobDisplay(ctk.CTk):
         #checks is a previous export button exsits
         if self.selected_workjob_button is not None:
             self.selected_workjob_button.destroy()
-
-         # create a button for export with the name of the selected workjob 
-        self.selected_workjob_button = ctk.CTkButton(
-            self.top_frame,
-            text=f"Export {selected_workjob} File",
-            command=lambda: self.export_workjobs(filtered_assignments, selected_workjob)
-        )
-        self.selected_workjob_button.grid(row=1, column=1, padx=10, pady=10)
+        if selected_workjob is not "All Workjobs":
+            # create a button for export with the name of the selected workjob 
+            self.selected_workjob_button = ctk.CTkButton(
+                self.top_frame,
+                text=f"Export {selected_workjob} File",
+                command=lambda: self.export_workjobs(filtered_assignments, selected_workjob)
+            )
+            self.selected_workjob_button.grid(row=1, column=1, padx=10, pady=10)
    
         #call display assignment fucntion with filtered assignments
         self.display_assignments(filtered_assignments)
