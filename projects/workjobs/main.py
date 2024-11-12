@@ -34,7 +34,7 @@ class Workjob:
         self.min_total = None
         self.max_total = None
         self.internal_name = alt_name
-        self.assigned_students = {period: [] for period in periods}  # Keep track of assigned students per period
+        self.assigned_students = {period: [] for period in periods}  
         self.classify_workjob()
 
     # function to classify the workjob as type T or E and assign it with proper min and max limits
@@ -167,7 +167,6 @@ def read_workjob_file(filename):
     
     return workjobs if success else None
     
-
 # assigns students to workjobs based on their free periods and job requirements
 def assign_students_to_workjobs(students, workjobs):
     #initialize variables
