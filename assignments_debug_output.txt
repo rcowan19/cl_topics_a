@@ -11,4 +11,4 @@ Date: Sep-16 Period D6B1 - Confirmed: ['Student G', 'Student B', 'Student H'],
 Date: Sep-18 Period D7B7 - Confirmed: [], 
 Date: Sep-18 Period D7B2 - Confirmed: ['Student P', 'Student U'], 
 Date: Sep-18 Period D7B3 - Confirmed: ['Student I', 'Student T'], 
-[Student E (Free Number: 3, Free Periods: ['D2B2', 'D3B6', 'D5B6']), Student E (Free Number: 3, Free Periods: ['D2B2', 'D3B6', 'D5B6'])]
+Student E (Free Number: 3, Free Periods: ['D2B2', 'D3B6', 'D5B6'])
